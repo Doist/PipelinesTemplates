@@ -1,0 +1,9 @@
+# Azure Pipelines expects repositories and their submodules to be using https by default.
+# While it is a best practice, it is potentially cumbersome for developers.
+# This ensures git uses https, regardless of what url it is passed.
+
+steps:
+- script: |
+    git config --global url."https://github.com/".insteadOf "git@github.com:"
+    git config --global url."https://".insteadOf "git://"
+  displayName: "Replace git ssh with https"
