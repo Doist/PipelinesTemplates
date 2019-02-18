@@ -1,0 +1,46 @@
+# Starts multiple Android emulators using the specified sdks and device.
+# Each emulator is setup to improve test reliability and reduce flakiness, by ensuring they don't lock themselves,
+# increasing the long-press delay, and disabling animations, spellchecker, IME keyboard and autofill service.
+# Note: This can be taxing. 5 emulators take up over 10GB of memory and occupy 16+ threads.
+
+parameters:
+  sdks: [28]
+  device: 'Nexus 5X'
+
+steps:
+- bash: echo '##vso[task.setvariable variable=PORT]5554'
+  displayName: 'Configure emulator port'
+- ${{ each sdk in parameters.sdks }}:
+  - bash: |
+      # Download image and create emulator.
+      echo 'y' | $ANDROID_HOME/tools/bin/sdkmanager --install "system-images;android-${{ sdk }};google_apis;x86"
+      echo 'no' | $ANDROID_HOME/tools/bin/avdmanager create avd -n "emulator-${{ sdk }}" -d "${{ parameters.device }}" -k "system-images;android-${{ sdk }};google_apis;x86" -c 128M -f
+      # Ensure hardware keyboard configuration is enabled, and set 1GB of RAM.
+      printf 'hw.keyboard = yes\nhw.ramSize = 1024\n' >> ~/.android/avd/"emulator-${{ sdk }}.avd"/config.ini
+      # Start emulator.
+      nohup $ANDROID_HOME/emulator/emulator -avd "emulator-${{ sdk }}" -port "$PORT" -no-snapshot -no-boot-anim -no-audio -no-window >/dev/null 2>&1 &
+      # Increment emulator port.
+      echo "##vso[task.setvariable variable=PORT]$(($PORT+2))"
+    displayName: 'Start emulator for API ${{ sdk }}'
+- bash: sleep 1
+  displayName: 'Wait for emulators to start'
+- bash: echo '##vso[task.setvariable variable=PORT]5554'
+  displayName: 'Configure emulator port'
+- ${{ each sdk in parameters.sdks }}:
+  - bash: |
+      # Wait for the device, and set it up: ensure it's on, disable animations, ime, spell checker and autofill.
+      echo "Waiting for emulator-$PORT device"
+      $ANDROID_HOME/platform-tools/adb </dev/null -s "emulator-$PORT" wait-for-device shell '
+          while [[ "$(getprop sys.boot_completed)" != "1" ]]; do sleep 1; done; input keyevent 82;
+          svc power stayon true;
+          settings put global window_animation_scale 0;
+          settings put global transition_animation_scale 0;
+          settings put global animator_duration_scale 0;
+          settings put secure long_press_timeout 1500;
+          settings put secure show_ime_with_hard_keyboard 0;
+          settings put secure spell_checker_enabled 0;
+          settings put secure autofill_service null;'
+      # Increment emulator port.
+      echo "##vso[task.setvariable variable=PORT]$(($PORT+2))"
+    timeoutInMinutes: 10
+    displayName: 'Setup emulator for API ${{ sdk }}'
