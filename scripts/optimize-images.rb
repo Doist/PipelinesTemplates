@@ -30,11 +30,20 @@ image_optim = ImageOptim.new(
     }
 )
 
+min_files = ARGV[0].to_i
+min_size = ARGV[1].to_f * (1024 ** 2)
+exclude_paths = ARGV[2..]
+
+paths = Dir.glob("**/*").reject { |f| File.directory?(f) }
+if !exclude_paths.empty?
+    paths = paths.reject { |f| f.start_with?(*exclude_paths) }
+end
+
 results = ["| File | Original size | Optimized size | Reduction |", "| --- | --- | --- | --- |"]
 old_size = 0
 new_size = 0
 
-image_optim.optimize_images!(Dir["**/*.*"]) do |_, optimized|
+image_optim.optimize_images!(paths) do |_, optimized|
     if optimized
         results << line(optimized, optimized.original_size, optimized.size)
         old_size += optimized.original_size
@@ -42,13 +51,7 @@ image_optim.optimize_images!(Dir["**/*.*"]) do |_, optimized|
     end
 end
 
-min_files = (ARGV[0] || 1).to_i
-min_size = (ARGV[1] || 1).to_f * (1024 ** 2)
-
 if results.size >= 2 + min_files && old_size - new_size >= min_size
     results << "| **Total** | **#{file_size(old_size)}** | **#{file_size(new_size)}** | **#{percent(old_size, new_size)}** |"
     puts results
-    exit 0
-else
-    exit 1
 end

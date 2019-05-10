@@ -1,14 +1,19 @@
 # Optimizes images and creates a pull request following changes in a branch.
-# A PR will be created if at least `minFiles` changed and the total size reduction is at least `minSize` megabytes.
+# See each parameter's documentation.
 #
 # Note: The way the PR itself is made is a hack. Improving this having access to a functioning token.
 # See: https://github.com/microsoft/azure-pipelines-tasks/issues/9754
 
 parameters:
+  # How many files must change for a PR to be created.
   minFiles: 1
-  minSize: 0.0000001
+  # How many megabytes must be reduced for a PR to be created.
+  minSize: 0.0001
+  # Branch prefix to use, eg. "image_optim/<commit-sha1>".
   branchPrefix: image_optim
-  resultFile: /tmp/result.md
+  # List of paths to exclude, eg. ['store/', 'original\ mockups/'].
+  # Each path must be single-quoted ('path'), and its spaces escaped ('original\ path').
+  excludePaths: []
 
 jobs:
   - job: OptimizeImages
@@ -30,26 +35,25 @@ jobs:
       displayName: 'Install dependencies'
 
     - script: |
-        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Doist/PipelinesTemplates/master/scripts/optimize-images.rb)" ${{ parameters.minFiles }} ${{ parameters.minSize }} > ${{ parameters.resultFile }}
-        [ $? -eq 0 ] && echo "##vso[task.setvariable variable=OPTIMIZED]true" && cat ${{ parameters.resultFile }}
+        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Doist/PipelinesTemplates/master/scripts/optimize-images.rb)" \
+          ${{ parameters.minFiles }} ${{ parameters.minSize }} ${{ join(' ', parameters.excludePaths) }} > /tmp/result.md
+        [ -s /tmp/result.md ] && echo "##vso[task.setvariable variable=OPTIMIZED]true" && cat /tmp/result.md || exit 0
       timeoutInMinutes: 120
-      continueOnError: true
       displayName: 'Optimize images'
 
     - script: |
-        result=$(cat ${{ parameters.resultFile }}) && \
         head="${{ parameters.branchPrefix }}/$BUILD_SOURCEVERSION" && \
         git checkout -b "$head" && \
         git add -u && \
-        git commit -a -m "Optimize images (lossless)" -m "$result" && \
+        git commit -a -m "Optimize images (lossless)" && \
         git push origin "$head" --force-with-lease && \
 
+        result=$(cat /tmp/result.md | gsed -z 's/\n/\\n/g') && \
         token=$(git config --get http.$(Build.Repository.Uri).extraheader | cut -d' ' -f3 | base64 --decode | cut -d':' -f2) && \
         base="${BUILD_SOURCEBRANCH/\/refs\/heads\//}" && \
         repo="${BUILD_REPOSITORY_URI##*/}" && \
         owner_url="${BUILD_REPOSITORY_URI%/*}" && \
         owner_repo="${owner_url##*/}/$repo" && \
-        result=$(echo "$result" | gsed -z 's/\n/\\n/g') && \
         curl -v \
           -H "Authorization: token $token" \
           -H "Accept: application/vnd.github.machine-man-preview+json" \
