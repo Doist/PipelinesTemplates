@@ -34,7 +34,7 @@ min_files = ARGV[0].to_i
 min_size = ARGV[1].to_f * (1024 ** 2)
 exclude_paths = ARGV[2..]
 
-paths = Dir.glob("**/*").reject { |f| File.directory?(f) }
+paths = Dir.glob("**/*").select { |f| File.file?(f) }
 if !exclude_paths.empty?
     paths = paths.reject { |f| f.start_with?(*exclude_paths) }
 end
