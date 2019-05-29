@@ -9,7 +9,7 @@ parameters:
   minFiles: 1
   # How many megabytes must be reduced for a PR to be created.
   minSize: 0.0001
-  # Branch prefix to use, eg. "image_optim/<commit-sha1>".
+  # Branch prefix to use, eg. "image_optim/<source-branch>".
   branchPrefix: image_optim
   # List of paths to exclude, eg. ['store/', 'original\ mockups/'].
   # Each path must be single-quoted ('path'), and its spaces escaped ('original\ path').
@@ -42,11 +42,11 @@ jobs:
       displayName: 'Optimize images'
 
     - script: |
-        head="${{ parameters.branchPrefix }}/$BUILD_SOURCEVERSION" && \
+        head="${{ parameters.branchPrefix }}/$BUILD_SOURCEBRANCH" && \
         git checkout -b "$head" && \
         git add -u && \
         git commit -a -m "Optimize images (lossless)" && \
-        git push origin "$head" --force-with-lease && \
+        git push origin "$head" --force && \
 
         result=$(cat /tmp/result.md | gsed -z 's/\n/\\n/g') && \
         token=$(git config --get http.$(Build.Repository.Uri).extraheader | cut -d' ' -f3 | base64 --decode | cut -d':' -f2) && \
