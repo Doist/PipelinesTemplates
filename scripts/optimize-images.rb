@@ -22,10 +22,20 @@ image_optim = ImageOptim.new(
         :enable_plugins => [
             # All lossless according to ImageOptim:
             # https://github.com/ImageOptim/ImageOptim/blob/fc4d2a02228f799ca68c60e7c5285c7d745458e9/svgo/index.js#L6-L23
-            "cleanupAttrs","cleanupListOfValues","cleanupNumericValues","convertColors","convertStyleToAttrs",
-            "minifyStyles","moveGroupAttrsToElems","removeComments","removeDoctype","removeEditorsNSData",
-            "removeEmptyAttrs","removeEmptyContainers","removeEmptyText","removeNonInheritableGroupAttrs",
-            "removeXMLProcInst","sortAttrs"
+            "cleanupAttrs", "cleanupListOfValues", "cleanupNumericValues", "convertColors", "convertStyleToAttrs",
+            "inlineStyles", "minifyStyles", "moveGroupAttrsToElems", "removeComments", "removeDoctype",
+            "removeEditorsNSData", "removeEmptyAttrs", "removeEmptyContainers", "removeEmptyText",
+            "removeNonInheritableGroupAttrs", "removeXMLProcInst", "sortAttrs"
+        ],
+        :disable_plugins => [
+            # Disable everything else.
+            "addAttributesToSVGElement", "addClassesToSVGElement", "cleanupEnableBackground", "cleanupIDs",
+            "collapseGroups", "convertPathData", "convertShapeToPath", "convertTransform", "mergePaths",
+            "moveElemsAttrsToGroup", "prefixIds", "removeAttributesBySelector", "removeAttrs", "removeDesc",
+            "removeDimensions", "removeElementsByAttr", "removeHiddenElems", "removeMetadata", "removeOffCanvasPaths",
+            "removeRasterImages", "removeScriptElement", "removeStyleElement", "removeTitle",
+            "removeUnknownsAndDefaults", "removeUnusedNS", "removeUselessDefs", "removeUselessStrokeAndFill",
+            "removeViewBox", "removeXMLNS", "reusePaths"
         ]
     }
 )
