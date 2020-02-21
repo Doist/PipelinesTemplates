@@ -75,9 +75,9 @@ jobs:
         result=$(cat /tmp/result.md | gsed -z 's/\n/\\n/g')
         token=$(git config --get http.$(Build.Repository.Uri).extraheader | cut -d' ' -f3 | base64 --decode | cut -d':' -f2)
         if [ ! -z "$SYSTEM_PULLREQUEST_SOURCEBRANCH" ]; then
-          base="${SYSTEM_PULLREQUEST_SOURCEBRANCH/\/refs\/heads\//}"
+          base="${SYSTEM_PULLREQUEST_SOURCEBRANCH/refs\/heads\//}"
         else
-          base="${BUILD_SOURCEBRANCH/\/refs\/heads\//}"
+          base="${BUILD_SOURCEBRANCH/refs\/heads\//}"
         fi
         repo="${BUILD_REPOSITORY_URI##*/}"
         owner_url="${BUILD_REPOSITORY_URI%/*}"
@@ -85,7 +85,7 @@ jobs:
         curl -v \
           -H "Authorization: token $token" \
           -H "Accept: application/vnd.github.machine-man-preview+json" \
-          -d "{\"title\":\"Optimize images (lossless)\", \"head\":\"$head\", \"base\":\"$base\", \"body\":\"$result\", \"maintainer_can_modify\":true}" \
+          -d "{\"title\":\"Optimize images in $base (lossless)\", \"head\":\"$head\", \"base\":\"$base\", \"body\":\"$result\", \"maintainer_can_modify\":true}" \
           "https://api.github.com/repos/$owner_repo/pulls"
 
         # Delete temporary branch in case the PR fails.
