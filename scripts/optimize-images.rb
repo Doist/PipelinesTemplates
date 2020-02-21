@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
-require "image_optim"
-require "image_optim/space"
+require 'image_optim'
+require 'image_optim/space'
 
 def percent(old_size, new_size)
     return format("%.2f%%", 100 - 100.0 * new_size / old_size)
@@ -25,20 +25,20 @@ image_optim = ImageOptim.new(
         :enable_plugins => [
             # All lossless according to ImageOptim:
             # https://github.com/ImageOptim/ImageOptim/blob/fc4d2a02228f799ca68c60e7c5285c7d745458e9/svgo/index.js#L6-L23
-            "cleanupAttrs", "cleanupListOfValues", "cleanupNumericValues", "convertColors", "convertStyleToAttrs",
-            "inlineStyles", "minifyStyles", "moveGroupAttrsToElems", "removeComments", "removeDoctype",
-            "removeEditorsNSData", "removeEmptyAttrs", "removeEmptyContainers", "removeEmptyText",
-            "removeNonInheritableGroupAttrs", "removeXMLProcInst", "sortAttrs"
+            'cleanupAttrs', 'cleanupListOfValues', 'cleanupNumericValues', 'convertColors', 'convertStyleToAttrs',
+            'inlineStyles', 'minifyStyles', 'moveGroupAttrsToElems', 'removeComments', 'removeDoctype',
+            'removeEditorsNSData', 'removeEmptyAttrs', 'removeEmptyContainers', 'removeEmptyText',
+            'removeNonInheritableGroupAttrs', 'removeXMLProcInst', 'sortAttrs'
         ],
         :disable_plugins => [
             # Disable everything else.
-            "addAttributesToSVGElement", "addClassesToSVGElement", "cleanupEnableBackground", "cleanupIDs",
-            "collapseGroups", "convertPathData", "convertShapeToPath", "convertTransform", "mergePaths",
-            "moveElemsAttrsToGroup", "prefixIds", "removeAttributesBySelector", "removeAttrs", "removeDesc",
-            "removeDimensions", "removeElementsByAttr", "removeHiddenElems", "removeMetadata", "removeOffCanvasPaths",
-            "removeRasterImages", "removeScriptElement", "removeStyleElement", "removeTitle",
-            "removeUnknownsAndDefaults", "removeUnusedNS", "removeUselessDefs", "removeUselessStrokeAndFill",
-            "removeViewBox", "removeXMLNS", "reusePaths"
+            'addAttributesToSVGElement', 'addClassesToSVGElement', 'cleanupEnableBackground', 'cleanupIDs',
+            'collapseGroups', 'convertPathData', 'convertShapeToPath', 'convertTransform', 'mergePaths',
+            'moveElemsAttrsToGroup', 'prefixIds', 'removeAttributesBySelector', 'removeAttrs', 'removeDesc',
+            'removeDimensions', 'removeElementsByAttr', 'removeHiddenElems', 'removeMetadata', 'removeOffCanvasPaths',
+            'removeRasterImages', 'removeScriptElement', 'removeStyleElement', 'removeTitle',
+            'removeUnknownsAndDefaults', 'removeUnusedNS', 'removeUselessDefs', 'removeUselessStrokeAndFill',
+            'removeViewBox', 'removeXMLNS', 'reusePaths'
         ]
     }
 )
@@ -47,12 +47,7 @@ min_files = ARGV[0].to_i
 min_size = ARGV[1].to_f * (1024 ** 2)
 exclude_paths = ARGV[2..]
 
-paths = Dir.glob("**/*").select { |f| File.file?(f) }
-if !exclude_paths.empty?
-    paths = paths.reject { |f| f.start_with?(*exclude_paths) }
-end
-
-results = ["| File | Original size | Optimized size | Reduction |", "| --- | --- | --- | --- |"]
+results = ['| File | Original size | Optimized size | Reduction |', '| --- | --- | --- | --- |']
 old_size = 0
 new_size = 0
 
