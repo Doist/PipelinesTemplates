@@ -7,8 +7,8 @@
 parameters:
   # How many files must change for a PR to be created.
   minFiles: 1
-  # How many megabytes must be reduced for a PR to be created.
-  minSize: 0.0001
+  # How many bytes must be reduced for a PR to be created.
+  minSize: 1
   # Branch prefix to use, eg. "image_optim/<source-branch>".
   branchPrefix: image_optim
   # List of paths to exclude, eg. ['store/', 'original\ mockups/'].
@@ -36,7 +36,8 @@ jobs:
 
     - script: |
         ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Doist/PipelinesTemplates/master/scripts/optimize-images.rb)" \
-          ${{ parameters.minFiles }} ${{ parameters.minSize }} ${{ join(' ', parameters.excludePaths) }} > /tmp/result.md
+        --min-files ${{ parameters.minFiles }} --min-size ${{ parameters.minSize }} \
+        --exclude ${{ join(' ', parameters.excludePaths) }} > /tmp/result.md
         [ -s /tmp/result.md ] && echo "##vso[task.setvariable variable=OPTIMIZED]true" && cat /tmp/result.md || exit 0
       timeoutInMinutes: 120
       displayName: 'Optimize images'

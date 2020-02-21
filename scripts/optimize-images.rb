@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 
+require 'getoptlong'
+require 'shellwords'
 require 'image_optim'
 require 'image_optim/space'
 
@@ -15,6 +17,24 @@ def line(name, old_size, new_size)
     return "| #{name} | #{file_size(old_size)} | #{file_size(new_size)} | #{percent(old_size, new_size)} |"
 end
 
+# Setup user options.
+opts = {
+    '--input' => Dir.glob('**/*'),
+    '--min-files' => 1,
+    '--min-size' => 1,
+    '--exclude' => []
+}
+
+GetoptLong.new(*opts.map { |o| [o[0], GetoptLong::OPTIONAL_ARGUMENT] }).each do |name, value|
+    next if value.empty?
+    if opts[name].kind_of?(Array)
+        opts[name] = value.shellsplit
+    else
+        opts[name] = value.to_i
+    end
+end
+
+# Setup ImageOptim options.
 image_optim = ImageOptim.new(
     :nice => 0,
     :advpng => {
@@ -43,23 +63,23 @@ image_optim = ImageOptim.new(
     }
 )
 
-min_files = ARGV[0].to_i
-min_size = ARGV[1].to_f * (1024 ** 2)
-exclude_paths = ARGV[2..]
+# Setup paths to include.
+paths = opts['--input'].select { |f| File.file?(f) }.reject { |f| f.start_with?(*opts['--exclude']) }
 
 results = ['| File | Original size | Optimized size | Reduction |', '| --- | --- | --- | --- |']
 old_size = 0
 new_size = 0
 
 image_optim.optimize_images!(paths) do |_, optimized|
-    if optimized
-        results << line(optimized, optimized.original_size, optimized.size)
-        old_size += optimized.original_size
-        new_size += optimized.size
-    end
+    next unless optimized
+
+    results << line(optimized, optimized.original_size, optimized.size)
+    old_size += optimized.original_size
+    new_size += optimized.size
 end
 
-if results.size >= 2 + min_files && old_size - new_size >= min_size
+# Output results.
+if results.size >= 2 + opts['--min-files'] && old_size - new_size >= opts['--min-size']
     results << "| **Total** | **#{file_size(old_size)}** | **#{file_size(new_size)}** | **#{percent(old_size, new_size)}** |"
     puts results
 end
