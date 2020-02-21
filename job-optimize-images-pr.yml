@@ -28,30 +28,51 @@ jobs:
       persistCredentials: true
 
     - script: |
+        if [ ! -z "$SYSTEM_PULLREQUEST_TARGETBRANCH" ]; then
+          git fetch -q origin $SYSTEM_PULLREQUEST_TARGETBRANCH
+          target="HEAD $(git merge-base HEAD FETCH_HEAD)"
+        else
+          target="HEAD~1"
+        fi
+        if git diff --name-only $target | egrep -q '\.(jpe?g|png|bmp|pnm|tiff|svg|gif)$'; then
+          echo "##vso[task.setvariable variable=CHANGED]true"
+        fi
+      displayName: 'Detect image changes'
+
+    - script: |
         brew install svgo gnu-sed
         gem install image_optim image_optim_pack
+      condition: eq(variables.CHANGED, 'true')
       displayName: 'Install dependencies'
 
     - script: |
-        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Doist/PipelinesTemplates/master/scripts/optimize-images.rb)" \
-        --min-files ${{ parameters.minFiles }} --min-size ${{ parameters.minSize }} \
-        --exclude ${{ join(' ', parameters.excludePaths) }} > /tmp/result.md
-        [ -s /tmp/result.md ] && echo "##vso[task.setvariable variable=OPTIMIZED]true" && cat /tmp/result.md || exit 0
+        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Doist/PipelinesTemplates/master/scripts/optimize-images.rb)" -- \
+          --min-files ${{ parameters.minFiles }} --min-size ${{ parameters.minSize }} \
+          --exclude ${{ join(' ', parameters.excludePaths) }} > /tmp/result.md
+      condition: eq(variables.CHANGED, 'true')
       displayName: 'Optimize images'
 
     - script: |
-        head="${{ parameters.branchPrefix }}/$BUILD_SOURCEBRANCH" && \
-        git checkout -b "$head" && \
+        if [ -s /tmp/result.md ]; then
+          echo "##vso[task.setvariable variable=OPTIMIZED]true"
+          cat /tmp/result.md
+        fi
+      condition: eq(variables.CHANGED, 'true')
+      displayName: 'Detect image optimizations'
+
+    - script: |
+        head="${{ parameters.branchPrefix }}/$BUILD_SOURCEBRANCH"
+        git checkout -b $head && \
         git add -u && \
         git commit -a -m "Optimize images (lossless)" && \
-        git push origin "$head" --force && \
+        git push origin $head --force && \
 
-        result=$(cat /tmp/result.md | gsed -z 's/\n/\\n/g') && \
-        token=$(git config --get http.$(Build.Repository.Uri).extraheader | cut -d' ' -f3 | base64 --decode | cut -d':' -f2) && \
-        base="${BUILD_SOURCEBRANCH/\/refs\/heads\//}" && \
-        repo="${BUILD_REPOSITORY_URI##*/}" && \
-        owner_url="${BUILD_REPOSITORY_URI%/*}" && \
-        owner_repo="${owner_url##*/}/$repo" && \
+        result=$(cat /tmp/result.md | gsed -z 's/\n/\\n/g')
+        token=$(git config --get http.$(Build.Repository.Uri).extraheader | cut -d' ' -f3 | base64 --decode | cut -d':' -f2)
+        base="${BUILD_SOURCEBRANCH/\/refs\/heads\//}"
+        repo="${BUILD_REPOSITORY_URI##*/}"
+        owner_url="${BUILD_REPOSITORY_URI%/*}"
+        owner_repo="${owner_url##*/}/$repo"
         curl -v \
           -H "Authorization: token $token" \
           -H "Accept: application/vnd.github.machine-man-preview+json" \
