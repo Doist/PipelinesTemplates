@@ -17,6 +17,9 @@ end
 
 image_optim = ImageOptim.new(
     :nice => 0,
+    :advpng => {
+        :level => 3
+    },
     :pngout => false,
     :svgo => {
         :enable_plugins => [
