@@ -78,5 +78,11 @@ jobs:
           -H "Accept: application/vnd.github.machine-man-preview+json" \
           -d "{\"title\":\"Optimize images (lossless)\", \"head\":\"$head\", \"base\":\"$base\", \"body\":\"$result\", \"maintainer_can_modify\":true}" \
           "https://api.github.com/repos/$owner_repo/pulls"
+
+        result=$?
+        if [ $result -ne 0 ]; then
+          git push origin --delete $head
+        fi
+        exit $result
       condition: eq(variables.OPTIMIZED, 'true')
       displayName: 'Create pull request'
