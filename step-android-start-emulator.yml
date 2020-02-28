@@ -21,14 +21,15 @@ steps:
     $ANDROID_HOME/platform-tools/adb devices
     # Wait for the device, and set it up: ensure it's on, disable animations, ime, spell checker and autofill.
     $ANDROID_HOME/platform-tools/adb </dev/null wait-for-device shell '
-          while [[ "$(getprop sys.boot_completed)" != "1" ]]; do sleep 1; done; input keyevent 82;
-          svc power stayon true;
-          settings put global window_animation_scale 0;
-          settings put global transition_animation_scale 0;
-          settings put global animator_duration_scale 0;
-          settings put secure long_press_timeout 1500;
-          settings put secure show_ime_with_hard_keyboard 0;
-          settings put secure spell_checker_enabled 0;
-          settings put secure autofill_service null;'
+          while [[ "$(getprop sys.boot_completed)" != "1" || "$(getprop init.svc.bootanim)" != "stopped" ]]; do sleep 1; done;
+            svc power stayon true;
+            settings put global window_animation_scale 0;
+            settings put global transition_animation_scale 0;
+            settings put global animator_duration_scale 0;
+            settings put secure long_press_timeout 1500;
+            settings put secure show_ime_with_hard_keyboard 0;
+            settings put secure spell_checker_enabled 0;
+            settings put secure autofill_service null;
+            input keyevent 82;'
   timeoutInMinutes: 10
   displayName: "Start emulator for API ${{ parameters.sdk }}"
