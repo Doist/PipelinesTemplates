@@ -3,8 +3,12 @@
 # increasing the long-press delay, and disabling animations, spellchecker, IME keyboard and autofill service.
 
 parameters:
-  sdk: 28
-  device: 'Nexus 5X'
+- name: sdk
+  type: number
+  default: 28
+- name: device
+  type: string
+  default: 'Nexus 5X'
 
 steps:
 - bash: |
@@ -14,22 +18,24 @@ steps:
     # Ensure hardware keyboard configuration is enabled, and set 1GB of RAM.
     printf 'hw.keyboard = yes\nhw.ramSize = 1024\n' >> ~/.android/avd/"emulator-${{ parameters.sdk }}.avd"/config.ini
     # Start emulator.
-    nohup $ANDROID_HOME/emulator/emulator -avd "emulator-${{ parameters.sdk }}" -no-snapshot -no-boot-anim >/dev/null 2>&1 &
+    nohup $ANDROID_HOME/emulator/emulator -avd "emulator-${{ parameters.sdk }}" -no-snapshot -no-boot-anim -no-audio -no-window -delay-adb >/dev/null 2>&1 &
     # Wait for it to start.
     sleep 1
-    # Print online devices.
+    # Print emulator version.
+    $ANDROID_HOME/emulator/emulator -version | head -n 1
+    # Print running devices.
     $ANDROID_HOME/platform-tools/adb devices
     # Wait for the device, and set it up: ensure it's on, disable animations, ime, spell checker and autofill.
     $ANDROID_HOME/platform-tools/adb </dev/null wait-for-device shell '
-          while [[ "$(getprop sys.boot_completed)" != "1" || "$(getprop init.svc.bootanim)" != "stopped" ]]; do sleep 1; done;
-            svc power stayon true;
-            settings put global window_animation_scale 0;
-            settings put global transition_animation_scale 0;
-            settings put global animator_duration_scale 0;
-            settings put secure long_press_timeout 1500;
-            settings put secure show_ime_with_hard_keyboard 0;
-            settings put secure spell_checker_enabled 0;
-            settings put secure autofill_service null;
-            input keyevent 82;'
+      while [[ "$(getprop sys.boot_completed)" != "1" || "$(getprop init.svc.bootanim)" != "stopped" ]]; do sleep 1; done;
+      svc power stayon true;
+      settings put global window_animation_scale 0;
+      settings put global transition_animation_scale 0;
+      settings put global animator_duration_scale 0;
+      settings put secure long_press_timeout 1500;
+      settings put secure show_ime_with_hard_keyboard 0;
+      settings put secure spell_checker_enabled 0;
+      settings put secure autofill_service null;
+      input keyevent 82;'
   timeoutInMinutes: 10
   displayName: "Start emulator for API ${{ parameters.sdk }}"
