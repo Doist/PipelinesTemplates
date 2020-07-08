@@ -1,0 +1,25 @@
+# Downloads and runs ktlint on changed files.
+
+parameters:
+- name: version
+  type: string
+  default: "0.37.2"
+- name: args
+  type: string
+  default: "--android --relative"
+
+steps:
+- bash: curl -sSLO https://github.com/pinterest/ktlint/releases/download/${{ parameters.version }}/ktlint && chmod a+x ktlint && sudo mv ktlint /usr/local/bin/
+  displayName: 'Install ktlint'
+- bash: |
+    # Determine what the target is, depending on this being a PR or a regular push.
+    if [ ! -z "$SYSTEM_PULLREQUEST_TARGETBRANCH" ]; then
+      git fetch -q origin $SYSTEM_PULLREQUEST_TARGETBRANCH
+      target="HEAD $(git merge-base HEAD FETCH_HEAD)"
+    else
+      target="HEAD~1"
+    fi
+
+    git diff --name-only $target | grep '\.kt[s"]\?$' | xargs ktlint ${{ parameters.args }} .
+  failOnStderr: true
+  displayName: 'Run ktlint on changed files'
