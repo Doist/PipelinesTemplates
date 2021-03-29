@@ -43,6 +43,7 @@ steps:
         settings put global window_animation_scale 0;
         settings put global transition_animation_scale 0;
         settings put global animator_duration_scale 0;
+        settings put global art_verifier_verify_debuggable 0;
         settings put secure long_press_timeout 1500;
         settings put secure show_ime_with_hard_keyboard 0;
         settings put secure spell_checker_enabled 0;
