@@ -37,10 +37,12 @@ end
 # Setup ImageOptim options.
 image_optim = ImageOptim.new(
     :nice => 0,
-    :advpng => {
-        :level => 3
-    },
-    :pngout => false,
+    :advpng => false, # redundant with oxipng
+    :pngcrush => false, # redundant with oxipng
+    :pngout => false, # redundant with oxipng
+    :optipng => false, # redundant with oxipng
+    :jpegoptim => false, # redundant with jpegrecompress
+    :jpegtran => false, # redundant with jpegrecompress
     :svgo => {
         :enable_plugins => [
             # All lossless according to ImageOptim:
